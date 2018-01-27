@@ -1,4 +1,13 @@
 package com.meterware.httpunit;
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+
+import org.w3c.dom.Document;
 /********************************************************************************************************************
 * $Id: ParsedHTML.java 951 2008-05-02 10:11:40Z wolfgang_fahl $
 *
@@ -22,17 +31,17 @@ package com.meterware.httpunit;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.w3c.dom.Document;
-import org.w3c.dom.html.*;
+import org.w3c.dom.html.HTMLAppletElement;
+import org.w3c.dom.html.HTMLCollection;
+import org.w3c.dom.html.HTMLFormElement;
+import org.w3c.dom.html.HTMLImageElement;
+import org.w3c.dom.html.HTMLTableCellElement;
+import org.w3c.dom.html.HTMLTableRowElement;
 
-import java.net.URL;
-import java.util.*;
-import java.io.IOException;
-
-import com.meterware.httpunit.scripting.ScriptableDelegate;
 import com.meterware.httpunit.dom.HTMLContainerElement;
-import com.meterware.httpunit.dom.HTMLDocumentImpl;
 import com.meterware.httpunit.dom.HTMLControl;
+import com.meterware.httpunit.dom.HTMLDocumentImpl;
+import com.meterware.httpunit.scripting.ScriptableDelegate;
 
 /**
  * @author <a href="mailto:russgold@httpunit.org">Russell Gold</a>
@@ -237,7 +246,7 @@ public class ParsedHTML {
             if (value.equals(aValue )) {
                //System.err.println(element.getTagName()+"("+name+")="+aValue);
              	 elements.add( element );
-            }	
+            }
         }
         return (HTMLElement[]) elements.toArray( new HTMLElement[ elements.size() ] );
     }
@@ -359,7 +368,7 @@ public class ParsedHTML {
             try {
                 _updateElements = false;
                 String language = NodeUtils.getNodeAttribute( element, "language", null );
-                if (!getResponse().getScriptingHandler().supportsScriptLanguage( language )) 
+                if (!getResponse().getScriptingHandler().supportsScriptLanguage( language ))
                 	_enableNoScriptNodes = true;
                 getResponse().getScriptingHandler().runScript( language, script );
             } finally {
@@ -382,7 +391,8 @@ public class ParsedHTML {
             try {
                 return getIncludedScript( scriptLocation );
             } catch (IOException e) {
-                throw new RuntimeException( "Error loading included script: " + e );
+                System.out.println("Error loading included script: " + e);
+                return "";
             }
         }
     }
@@ -466,52 +476,60 @@ public class ParsedHTML {
 
     static class DefaultElementFactory extends HTMLElementFactory {
 
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
         	  // [ 1531005 ] getElementsWithAttribute **FIX**
-            //if (element.getAttribute( "id" ).equals( "" )) { 
+            //if (element.getAttribute( "id" ).equals( "" )) {
             //	return null;
-            //}	
+            //}
             return parsedHTML.toDefaultElement( element );
         }
 
-        protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {}
+        @Override
+		protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {}
     }
 
 
     private HTMLElement toDefaultElement( Element element ) {
         return new HTMLElementBase( element ) {
-            public ScriptableDelegate newScriptable() { return new HTMLElementScriptable( this ); }
+            @Override
+			public ScriptableDelegate newScriptable() { return new HTMLElementScriptable( this ); }
             public ScriptableDelegate getParentDelegate() { return getResponse().getDocumentScriptable(); }
         };
     }
 
 
     static class WebFormFactory extends HTMLElementFactory {
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             return parsedHTML.toWebForm( element );
         }
     }
 
 
     static class WebLinkFactory extends HTMLElementFactory {
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             return parsedHTML.toLinkAnchor( element );
         }
     }
 
 
     static class TextBlockFactory extends HTMLElementFactory {
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             return parsedHTML.toTextBlock( element );
         }
 
 
-        protected boolean addToContext() {
+        @Override
+		protected boolean addToContext() {
             return true;
         }
 
 
-        protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {
+        @Override
+		protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {
             for (Iterator i = pot.getContexts(); i.hasNext();) {
                 Object o = i.next();
                 if (!(o instanceof ParsedHTML)) continue;
@@ -525,11 +543,13 @@ public class ParsedHTML {
 
     static class ScriptFactory extends HTMLElementFactory {
 
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             return null;
         }
 
-        void recordElement( NodeUtils.PreOrderTraversal pot, Element element, ParsedHTML parsedHTML ) {
+        @Override
+		void recordElement( NodeUtils.PreOrderTraversal pot, Element element, ParsedHTML parsedHTML ) {
             parsedHTML.interpretScriptElement( element );
         }
     }
@@ -537,62 +557,74 @@ public class ParsedHTML {
 
     static class NoScriptFactory extends HTMLElementFactory {
 
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             return parsedHTML.toNoscriptElement( element );
         }
 
-        protected boolean addToContext() {
+        @Override
+		protected boolean addToContext() {
             return true;
         }
     }
 
 
     static class WebFrameFactory extends HTMLElementFactory {
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             return parsedHTML.toWebFrame( element );
         }
     }
 
 
     static class WebIFrameFactory extends HTMLElementFactory {
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             return parsedHTML.toWebIFrame( element );
         }
 
 
-        protected boolean isRecognized( ClientProperties properties ) {
+        @Override
+		protected boolean isRecognized( ClientProperties properties ) {
             return properties.isIframeSupported();
         }
 
 
-        protected boolean addToContext() {
+        @Override
+		protected boolean addToContext() {
             return true;
         }
     }
 
 
     static class WebImageFactory extends HTMLElementFactory {
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             return parsedHTML.toWebImage( element );
         }
     }
 
 
     static class WebAppletFactory extends HTMLElementFactory {
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             return parsedHTML.toWebApplet( element );
         }
-        protected boolean addToContext() { return true; }
+        @Override
+		protected boolean addToContext() { return true; }
     }
 
 
     static class WebTableFactory extends HTMLElementFactory {
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             return parsedHTML.toWebTable( element );
         }
-        protected boolean addToContext() { return true; }
+        @Override
+		protected boolean addToContext() { return true; }
 
-        protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {
+        @Override
+		protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {
             for (Iterator i = pot.getContexts(); i.hasNext();) {
                 Object o = i.next();
                 if (o instanceof ParsedHTML) ((ParsedHTML) o).addToList( htmlElement );
@@ -603,7 +635,8 @@ public class ParsedHTML {
 
 
     static class TableRowFactory extends HTMLElementFactory {
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             WebTable wt = getWebTable( pot );
             if (wt == null) return null;
             return wt.newTableRow( (HTMLTableRowElement) element );
@@ -611,15 +644,18 @@ public class ParsedHTML {
         private WebTable getWebTable( NodeUtils.PreOrderTraversal pot ) {
             return (WebTable) getClosestContext( pot, WebTable.class );
         }
-        protected boolean addToContext() { return true; }
-        protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {
+        @Override
+		protected boolean addToContext() { return true; }
+        @Override
+		protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {
             getWebTable( pot ).addRow( (TableRow) htmlElement );
         }
     }
 
 
     static class TableCellFactory extends HTMLElementFactory {
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             TableRow tr = getTableRow( pot );
             if (tr == null) return null;
             return tr.newTableCell( (HTMLTableCellElement) element );
@@ -627,15 +663,18 @@ public class ParsedHTML {
         private TableRow getTableRow( NodeUtils.PreOrderTraversal pot ) {
             return (TableRow) getClosestContext( pot, TableRow.class );
         }
-        protected boolean addToContext() { return true; }
-        protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {
+        @Override
+		protected boolean addToContext() { return true; }
+        @Override
+		protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {
             getTableRow( pot ).addTableCell( (TableCell) htmlElement );
         }
     }
 
     static class FormControlFactory extends HTMLElementFactory {
 
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             HTMLFormElement form = ((HTMLControl) element).getForm();
             if (form == null) {
                 return newControlWithoutForm( parsedHTML, element );
@@ -661,13 +700,16 @@ public class ParsedHTML {
 
 
     static class WebListFactory extends HTMLElementFactory {
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             return parsedHTML.toOrderedList( element );
         }
 
-        protected boolean addToContext() { return true; }
+        @Override
+		protected boolean addToContext() { return true; }
 
-        protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {
+        @Override
+		protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {
             TextBlock textBlock = getTextBlock( pot );
             if (textBlock != null) textBlock.addList( (WebList) htmlElement );
         }
@@ -679,7 +721,8 @@ public class ParsedHTML {
 
 
     static class ListItemFactory extends HTMLElementFactory {
-        HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
+        @Override
+		HTMLElement toHTMLElement( NodeUtils.PreOrderTraversal pot, ParsedHTML parsedHTML, Element element ) {
             WebList webList = getWebList( pot );
             if (webList == null) return null;
             return webList.addNewItem( element );
@@ -689,9 +732,11 @@ public class ParsedHTML {
             return (WebList) getClosestContext( pot, WebList.class );
         }
 
-        protected boolean addToContext() { return true; }
+        @Override
+		protected boolean addToContext() { return true; }
 
-        protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {
+        @Override
+		protected void addToLists( NodeUtils.PreOrderTraversal pot, HTMLElement htmlElement ) {
         }
     }
 
@@ -800,7 +845,7 @@ public class ParsedHTML {
 
 
     /**
-     * check whether the given node is a Web link by checking that 
+     * check whether the given node is a Web link by checking that
      * the node is of type "A"
      * @param node - the node to check
      * @return whether the given node represents a web link
@@ -812,7 +857,7 @@ public class ParsedHTML {
        * -> should be isAnchor method and getAnchor
        */
     	boolean result=false;
-      String tagName = ((Element) node).getTagName();    	
+      String tagName = ((Element) node).getTagName();
       if (!tagName.equalsIgnoreCase( "area" ) && !tagName.equalsIgnoreCase( "a")) {
       } else {
       	// pre 1.7 code - still active
@@ -1037,7 +1082,8 @@ public class ParsedHTML {
 //---------------------------------- Object methods --------------------------------
 
 
-    public String toString() {
+    @Override
+	public String toString() {
         return _baseURL.toExternalForm() + System.getProperty( "line.separator" ) +
                _rootNode;
     }
@@ -1192,7 +1238,8 @@ public class ParsedHTML {
         }
 
 
-        public ScriptableDelegate newScriptable() {
+        @Override
+		public ScriptableDelegate newScriptable() {
             return null;
         }
 
