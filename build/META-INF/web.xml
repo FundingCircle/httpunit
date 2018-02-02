@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE web-app PUBLIC '-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN' 'http://java.sun.com/dtd/web-app_2_3.dtd'><web-app>
+  <servlet>
+    <servlet-name>servlet_2</servlet-name>
+    <servlet-class>com.meterware.servletunit.WebXMLTest$SimpleGetServlet</servlet-class>
+  </servlet>
+  <servlet>
+    <servlet-name>servlet_1</servlet-name>
+    <servlet-class>com.meterware.servletunit.WebXMLTest$SimpleErrorServlet</servlet-class>
+  </servlet>
+  <servlet>
+    <servlet-name>servlet_0</servlet-name>
+    <servlet-class>com.meterware.servletunit.WebXMLTest$SimpleLogonServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>servlet_2</servlet-name>
+    <url-pattern>/Example/SimpleServlet</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>servlet_1</servlet-name>
+    <url-pattern>/Error</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>servlet_0</servlet-name>
+    <url-pattern>/Logon</url-pattern>
+  </servlet-mapping>
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>SecureArea1</web-resource-name>
+      <url-pattern>/Example/SimpleServlet</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>supervisor</role-name>
+    </auth-constraint>
+  </security-constraint>
+  <login-config>
+    <auth-method>FORM</auth-method>
+    <realm-name>Sample Realm</realm-name>
+    <form-login-config>      <form-login-page>/Logon</form-login-page>
+      <form-error-page>/Error</form-error-page>
+    </form-login-config>  </login-config>
+</web-app>

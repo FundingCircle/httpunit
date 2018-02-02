@@ -1,0 +1,14 @@
+machine:
+  java:
+    version: oraclejdk8
+
+deployment:
+  release:
+    branch: master
+    commands:
+      - mvn versions:set -DnewVersion=1.7-patch-3
+      - mvn -s settings.xml deploy
+  snapshot:
+    branch: /.*/
+    commands:
+      - mvn -s settings.xml deploy
