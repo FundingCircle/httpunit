@@ -17,7 +17,7 @@ export MAVEN_OPTS=-Xmx384M
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>vonrosen.httpunit</groupId>
 	<artifactId>httpunit</artifactId>
-	<version>1.7-patch-3-SNAPSHOT</version>
+	<version>1.7-patch-3</version>
 	<description>A library for testing websites programmatically</description>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
@@ -193,11 +193,18 @@ export MAVEN_OPTS=-Xmx384M
 		</dependency>
 	</dependencies>
 
-  <distributionManagement>
-    <repository>
-      <id>java.net</id>
-      <uniqueVersion>false</uniqueVersion>
-      <url>java-net:/maven2-repository/trunk/repository/</url>
-    </repository>
-  </distributionManagement>  
+	<distributionManagement>
+		<repository>
+			<uniqueVersion>false</uniqueVersion>
+			<id>httpunit-release</id>
+			<name>Release</name>
+			<url>https://fundingcircle.jfrog.io/fundingcircle/libs-release-local</url>
+		</repository>
+		<snapshotRepository>
+			<uniqueVersion>true</uniqueVersion>
+			<id>httpunit-snapshot</id>
+			<name>Snapshots</name>
+			<url>https://fundingcircle.jfrog.io/fundingcircle/libs-snapshot-local</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>
